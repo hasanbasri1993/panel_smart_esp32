@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Arduino Project Settings">
-    <option name="baudRate" value="115200" />
+    <option name="baudRate" value="256000" />
+    <option name="buildConfigurationPatternType" value="0" />
     <option name="port" value="/dev/cu.Repleo-CP2102-02INOMNF" />
     <option name="serialEndOfLine" value="0" />
   </component>
