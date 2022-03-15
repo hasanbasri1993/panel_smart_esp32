@@ -5,8 +5,6 @@
 #ifndef INC_220314_124647_LOLIN32_LITE_VARIABLES_H
 #define INC_220314_124647_LOLIN32_LITE_VARIABLES_H
 
-char buffer[250];
-
 unsigned long previousMillisTimeUpdate = 0;
 unsigned long previousMillisScroll = 0;
 unsigned long currentMillis = 0;
@@ -20,7 +18,7 @@ int16_t xposScroll = 64;
 uint16_t text_length = 0;
 char ssid[] = "Smart Home AP"; // Nama Wifi Anda
 char pass[] = "Husna1299";     // Password Wifi Anda
-#define TZ (+7 * 60 * 60)      // Timezone
+#define TZ (+7 * 60 * 60)       // Timezone
 
 String Message0 = "welcome...";
 String apiNews = "<change with your own";
@@ -28,6 +26,9 @@ String urlNews = "https://newsapi.org/v2/top-headlines?country=id&apiKey=" + api
 
 int32_t scrollDelay = 15;
 int32_t brightness = 100;
+
+char beritaLastest[38] = {};
+int bacaBeritaKe = 0;
 
 // Color definitions
 static const uint16_t myBLACK = 0x0000;
@@ -52,7 +53,6 @@ static const uint16_t myDARK_GREY = 0x7BEF;//0x4208;
 static const uint16_t myGREENYELLOW = 0xAFE5;
 
 uint8_t r = 0, g = 0, b = 0;
-
 
 #endif //INC_220314_124647_LOLIN32_LITE_VARIABLES_H
 

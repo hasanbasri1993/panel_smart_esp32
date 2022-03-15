@@ -14,16 +14,15 @@ MatrixPanel_I2S_DMA *dma_display = nullptr;
 WebServer server(80);
 Preferences preferences;
 
-StaticJsonDocument<250> jsonDocument;
+StaticJsonDocument<32> jsonRequest;
 DynamicJsonDocument beritaJson(18000);
-char beritaLastest[38] = {};
-int bacaBeritaKe = 0;
 
 void fetchBerita() {
     HTTPClient http;
     http.begin(urlNews);
     int httpResponseCode = http.GET();
     if (httpResponseCode > 0) {
+        beritaJson.clear();
         Serial.print("HTTP Response code: ");
         Serial.print("HTTP Response code: ");
         Serial.println(httpResponseCode);
@@ -75,6 +74,7 @@ void updateTime() {
         dma_display->setCursor(45, yPos);
         dma_display->printf("%02d", detik);
 
+
         int16_t yPosDate = 30;
         dma_display->fillRect(0, 23, 64, 1, myBRIGHT_RED);
         dma_display->fillRect(0, 24, 64, 10, myBLACK);
@@ -86,8 +86,6 @@ void updateTime() {
         dma_display->print(", ");
         dma_display->setCursor(45, yPosDate);
         dma_display->print(tm->tm_mday);
-//        dma_display->setCursor(20, 24);
-//        dma_display->print(tm->tm_year);
         dma_display->setFont();
     }
 }
@@ -95,7 +93,6 @@ void updateTime() {
 void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text) {
     text_length = text.length();
     dma_display->setTextWrap(false);
-
     if (xposScroll > -(64 + text_length * 7.5)) {
         if (currentMillis - previousMillisScroll >= scroll_delay) {
             previousMillisScroll = currentMillis;
@@ -115,7 +112,10 @@ void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text) {
             }
         }
     } else {
-        bacaBeritaKe++;
+        if (bacaBeritaKe > 36) {
+            bacaBeritaKe = 0;
+            fetchBerita();
+        } else bacaBeritaKe++;
         xposScroll = 64;
     }
 }
@@ -123,45 +123,33 @@ void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text) {
 void handlePostMessage() {
     if (!server.hasArg("plain"))
         server.send(200, "application/json", "Please send json format");
-
     String body = server.arg("plain");
-    deserializeJson(jsonDocument, body);
-
-    String red = jsonDocument["message"];
+    deserializeJson(jsonRequest, body);
+    String red = jsonRequest["message"];
     Message0 = red;
     preferences.putString("message", red);
-
-    // Respond to the client
     server.send(200, "application/json", red);
 }
 
 void handlePostScrollDelay() {
     if (!server.hasArg("plain"))
         server.send(200, "application/json", "Please send json format");
-
     String body = server.arg("plain");
-    deserializeJson(jsonDocument, body);
-
-    int32_t red = jsonDocument["delay"];
+    deserializeJson(jsonRequest, body);
+    int32_t red = jsonRequest["delay"];
     scrollDelay = red;
     preferences.putInt("scrollDelay", red);
-
-    // Respond to the client
     server.send(200, "application/json", "success");
 }
 
 void handlePostBrightness() {
     if (!server.hasArg("plain"))
         server.send(200, "application/json", "Please send json format");
-
     String body = server.arg("plain");
-    deserializeJson(jsonDocument, body);
-
-    int32_t red = jsonDocument["brightness"];
+    deserializeJson(jsonRequest, body);
+    int32_t red = jsonRequest["brightness"];
     brightness = red;
     preferences.putInt("brightness", red);
-    //
-    // Respond to the client
     server.send(200, "application/json", "success");
 }
 
@@ -182,12 +170,16 @@ void setup() {
     mxconfig.gpio.e = 18;
     mxconfig.clkphase = false;
     mxconfig.driver = HUB75_I2S_CFG::FM6126A;
+
     dma_display = new MatrixPanel_I2S_DMA(mxconfig);
     dma_display->begin();
     dma_display->setBrightness8(50); // 0-255
-    dma_display->clearScreen();
-    dma_display->fillScreen(myWHITE);
-    dma_display->clearScreen();
+    dma_display->setTextWrap(true);
+    dma_display->setCursor(0, 0);
+    dma_display->setTextSize(1);
+    dma_display->setTextColor(MatrixPanel_I2S_DMA::color444(0, 15, 15));
+    dma_display->print("Attempting to connect ...");
+
     Serial.begin(250000);
     Serial.print("Attempting to connect to Network named: ");
     Serial.println(ssid);
@@ -214,9 +206,10 @@ void setup() {
     dma_display->setTextWrap(true);
     dma_display->setCursor(0, 0);
     dma_display->setTextSize(1);
-    dma_display->setFont(&FreeSerif9pt7b);
     dma_display->setTextColor(MatrixPanel_I2S_DMA::color444(0, 15, 15));
     dma_display->print(ip);
+    dma_display->setCursor(0, 16);
+    dma_display->print(ssid);
     delay(3000);
     dma_display->clearScreen();
     configTime(TZ, 0, "id.pool.ntp.org");
