@@ -3,6 +3,7 @@
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 #include "WiFi.h"
 #include <Fonts/FreeSerif9pt7b.h>
+#include <Fonts/kongtext4pt7b.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
 #include <FreeRTOS.h>
@@ -14,30 +15,28 @@ WebServer server(80);
 Preferences preferences;
 
 StaticJsonDocument<250> jsonDocument;
+DynamicJsonDocument beritaJson(18000);
+char beritaLastest[38] = {};
+int bacaBeritaKe = 0;
 
-String fetchBerita() {
+void fetchBerita() {
     HTTPClient http;
-
-    // Your IP address with path or Domain name with URL path
-    http.begin("https://newsapi.org/v2/top-headlines?country=id&apiKey=ef589987f29946ba8402cbb50b1d200c");
-
-    // Send HTTP POST request
+    http.begin(urlNews);
     int httpResponseCode = http.GET();
-
-    String payload = "{}";
-
     if (httpResponseCode > 0) {
         Serial.print("HTTP Response code: ");
+        Serial.print("HTTP Response code: ");
         Serial.println(httpResponseCode);
-        payload = http.getString();
+        DeserializationError error = deserializeJson(beritaJson, http.getString());
+        if (error) {
+            Serial.print("deserializeJson() failed: ");
+            Serial.println(error.c_str());
+        }
     } else {
         Serial.print("Error code: ");
         Serial.println(httpResponseCode);
     }
-    // Free resources
     http.end();
-
-    return payload;
 }
 
 void updateTime() {
@@ -47,7 +46,6 @@ void updateTime() {
         static time_t last_t;
         struct tm *tm;
         static const char *const wd[7] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"};
-
         t = time(nullptr);
         if (last_t == t)
             return;
@@ -76,20 +74,37 @@ void updateTime() {
         dma_display->setTextColor(myBRIGHT_RED);
         dma_display->setCursor(45, yPos);
         dma_display->printf("%02d", detik);
+
+        int16_t yPosDate = 30;
+        dma_display->fillRect(0, 23, 64, 1, myBRIGHT_RED);
+        dma_display->fillRect(0, 24, 64, 10, myBLACK);
+        dma_display->setFont(&kongtext4pt7b);
+        dma_display->setTextColor(myDARKGREEN);
+        dma_display->setCursor(1, yPosDate);
+        dma_display->print(wd[tm->tm_wday]);
+        dma_display->setCursor(40, yPosDate);
+        dma_display->print(", ");
+        dma_display->setCursor(45, yPosDate);
+        dma_display->print(tm->tm_mday);
+//        dma_display->setCursor(20, 24);
+//        dma_display->print(tm->tm_year);
+        dma_display->setFont();
     }
 }
 
 void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text) {
     text_length = text.length();
     dma_display->setTextWrap(false);
-    if (xposScroll > -(64 + text_length * 14)) {
+
+    if (xposScroll > -(64 + text_length * 7.5)) {
         if (currentMillis - previousMillisScroll >= scroll_delay) {
             previousMillisScroll = currentMillis;
             xposScroll--;
             int y = r;
             dma_display->setFont();
             dma_display->setCursor(xposScroll, ypos);
-            dma_display->fillRect(0, 16, 64, 17, myBLACK);
+            dma_display->fillRect(0, ypos, 64, 8, myBLACK);
+            dma_display->setFont(&kongtext4pt7b);
             for (int x = 0; x < text_length; x++) {
                 dma_display->setTextColor(myRED);
                 dma_display->print(text[x]);
@@ -99,7 +114,10 @@ void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text) {
                 }
             }
         }
-    } else { xposScroll = 64; }
+    } else {
+        bacaBeritaKe++;
+        xposScroll = 64;
+    }
 }
 
 void handlePostMessage() {
@@ -170,7 +188,7 @@ void setup() {
     dma_display->clearScreen();
     dma_display->fillScreen(myWHITE);
     dma_display->clearScreen();
-    Serial.begin(115200);
+    Serial.begin(250000);
     Serial.print("Attempting to connect to Network named: ");
     Serial.println(ssid);
     WiFi.begin(ssid, pass);
@@ -184,7 +202,7 @@ void setup() {
     Serial.println(ip);
 
     setup_routing();
-
+    fetchBerita();
     preferences.begin("gpio", false);
     Message0 = preferences.getString("message", Message0);
     scrollDelay = preferences.getInt("scrollDelay", scrollDelay);
@@ -209,5 +227,7 @@ void loop() {
     server.handleClient();
     dma_display->setBrightness8(brightness);
     updateTime();
-    scroll_text(17, scrollDelay, Message0);
+    Message0 = beritaJson["articles"][bacaBeritaKe]["description"].as<String>() + " - " +
+               beritaJson["articles"][bacaBeritaKe]["source"]["name"].as<String>();
+    scroll_text(15, scrollDelay, Message0);
 }

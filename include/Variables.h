@@ -23,9 +23,11 @@ char pass[] = "Husna1299";     // Password Wifi Anda
 #define TZ (+7 * 60 * 60)      // Timezone
 
 String Message0 = "welcome...";
+String apiNews = "<change with your own";
+String urlNews = "https://newsapi.org/v2/top-headlines?country=id&apiKey=" + apiNews;
+
 int32_t scrollDelay = 15;
 int32_t brightness = 100;
-
 
 // Color definitions
 static const uint16_t myBLACK = 0x0000;
