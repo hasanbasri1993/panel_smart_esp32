@@ -30,6 +30,10 @@ int32_t brightness = 100;
 char beritaLastest[38] = {};
 int bacaBeritaKe = 0;
 
+int ldr = A0; //Set A0(Analog Input) for LDR.
+int valueLux = 0;
+int threshold  = 300;
+
 // Color definitions
 static const uint16_t myBLACK = 0x0000;
 static const uint16_t myWHITE = 0xFFFF;

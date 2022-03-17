@@ -217,8 +217,10 @@ void setup() {
 
 void loop() {
     currentMillis = millis();
+    valueLux = analogRead(ldr); //Reads the Value of LDR(light).
+    if (valueLux < threshold) dma_display->setBrightness8(10);
+    else dma_display->setBrightness8(brightness);
     server.handleClient();
-    dma_display->setBrightness8(brightness);
     updateTime();
     Message0 = beritaJson["articles"][bacaBeritaKe]["description"].as<String>() + " - " +
                beritaJson["articles"][bacaBeritaKe]["source"]["name"].as<String>();
