@@ -44,7 +44,7 @@ void updateTime() {
         time_t t;
         static time_t last_t;
         struct tm *tm;
-        static const char *const wd[7] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"};
+        static const char *const wd[7] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"};
         t = time(nullptr);
         if (last_t == t)
             return;
